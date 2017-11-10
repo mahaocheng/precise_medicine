@@ -11,7 +11,7 @@ require(XML)
 argv <- commandArgs(TRUE)
 input.path <- argv[1]
 output.path <- argv[2]
-#Rscript C:\Users\lenovo\workspace\precise_medicine\test_batch.R "E://test//tmp4" "E://pyropictures_test6"
+#Rscript C:/Users/lenovo/workspace/precise_medicine/plot_pyro_pictures.R "E:/test/tmp4" "E:/pyropictures_test6"
 #input.path <- "E://test//tmp4"
 #output.path <- "E://pyropictures_test5//TEST"
 if (!file.exists(output.path)){
