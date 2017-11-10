@@ -88,7 +88,7 @@ GenerateInterval <- function(intensity){
     interval <- 50
   } else if (intensity.range < 700) {
     interval <- 100
-  } else{
+  } else {
     interval <- 200
   }
   return(interval)
@@ -145,8 +145,7 @@ GenerateAQList <- function(input.path, filename, wellname){
               moment.xpath), xmlValue)) / 1000
   substance.node <- getNodeSet(file.parsed, substance.xpath)
   substance.value <- xmlSApply(substance.node, xmlValue)
-  signalvalue.node <- getNodeSet(file.parsed, 
-      signalvalue.xpath)
+  signalvalue.node <- getNodeSet(file.parsed, signalvalue.xpath)
   signal.value <- as.numeric(xmlSApply(signalvalue.node, xmlValue))
   baseline.node <- getNodeSet(file.parsed, baseline.xpath)
   baseline.value <- as.numeric(xmlSApply(baseline.node, xmlValue))
