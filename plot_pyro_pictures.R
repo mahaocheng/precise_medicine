@@ -11,8 +11,8 @@ require(XML)
 argv <- commandArgs(TRUE)
 input.path <- argv[1]
 output.path <- argv[2]
-#Rscript C:/Users/lenovo/workspace/precise_medicine/plot_pyro_pictures.R "E:/test/tmp4" "E:/pyropictures_test6"
-#input.path <- "E://test//tmp4"
+#Rscript --no-restore C:/Users/lenovo/workspace/precise_medicine/plot_pyro_pictures.R "E:/test" "E:/pyropictures_test6"
+#input.path <- "E://test"
 #output.path <- "E://pyropictures_test5//TEST"
 if (!file.exists(output.path)){
   dir.create(output.path, showWarnings = FALSE)
@@ -72,7 +72,7 @@ ClassifyWellType <- function(input.path, filename){
       analyzed.welllist = as.vector(analyzed.welllist),
       AQanalyzed.welllist = as.vector(AQanalyzed.welllist),
       Otheranalyzed.welllist = as.vector(Otheranalyzed.welllist))
-  print(categorywelllist)
+  #print(categorywelllist)
   return(categorywelllist)
 }
 
@@ -442,6 +442,33 @@ if(TRUE){
   }
   #ClassifyWellType("BZJ-1705025-1.pyrorun")
 }
+
+if(FALSE){
+  filelist <- list.files(input.path, pattern = "*[^)].pyrorun$")
+  for (file.name in filelist) {
+    #file.name <- filelist[2]
+    #print(file.name)
+    category.welltype <- try(ClassifyWellType(input.path, file.name), 
+        silent=TRUE)
+    if('try-error' %in% class(category.welltype)){
+      break
+    }
+    if (length(category.welltype$AQanalyzed.welllist) > 0) {
+      for (wellname in category.welltype$AQanalyzed.welllist) {
+        file.parsed <- htmlParse(paste(input.path, "//", file.name, sep=""))  
+        well.name <- wellname
+        wellnr.attrstring <- paste("[@wellnr='", well.name, "']", sep="")
+        wellanalysis.xpath <- paste("//wellanalysismethodresults",
+            wellnr.attrstring, "/*[@index='1']", sep = "")
+        wellanalysis.node <- getNodeSet(file.parsed, wellanalysis.xpath)
+        if (length(wellanalysis.node)==1) {
+          cat(file.name, wellname, length(wellanalysis.node),"\n")
+        }
+      }
+    }
+  }
+}
 par(opar)
 rm(list = ls())
+gc()
 
