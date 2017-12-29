@@ -11,7 +11,8 @@ require(XML)
 argv <- commandArgs(TRUE)
 input.path <- argv[1]
 output.path <- argv[2]
-#Rscript --no-restore C:/Users/lenovo/workspace/precise_medicine/plot_pyro_pictures.R "E:/test" "E:/pyropictures_test6"
+unique.string <- argv[3]
+#Rscript --no-restore D:/R/R-script/plot_pyro_pictures.R "http://127.0.0.1:8080/BZJ-171221-1.pyrorun" "D:/R/testoutput" "UniqueString11"
 #input.path <- "E://test"
 #output.path <- "E://pyropictures_test5//TEST"
 if (!file.exists(output.path)){
@@ -20,9 +21,9 @@ if (!file.exists(output.path)){
 setwd(output.path)
 
 opar <- par(no.readonly = T)
-ClassifyWellType <- function(input.path, filename){
+ClassifyWellType <- function(input.path){
   #filename <- "CS160718.pyrorun"
-  file.parsed <- htmlParse(paste(input.path, "//", filename, sep=""))  
+  file.parsed <- htmlParse(input.path)  
   wellsetuplist.xpath <- "//wellsetup[@wellnr]"
   if (class(xmlSApply(getNodeSet(file.parsed, wellsetuplist.xpath),
           xmlAttrs)) == "list"){
@@ -94,10 +95,10 @@ GenerateInterval <- function(intensity){
   return(interval)
 }
 
-GenerateAQList <- function(input.path, filename, wellname){
+GenerateAQList <- function(input.path, wellname){
   #GenerateAQList("GZJ20170906.pyrorun","A1")
   #filename <- "CS160718.pyrorun";wellname <- "A1"
-  file.parsed <- htmlParse(paste(input.path, "//", filename, sep=""))  
+  file.parsed <- htmlParse(input.path)  
   well.name <- wellname
   wellnr.attrstring <- paste("[@wellnr='", well.name, "']", sep="")
   welldata.xpath <- paste("//welldata", wellnr.attrstring, sep="")
@@ -280,9 +281,9 @@ GenerateVariableList <- function(welldata.list){
   return(variableorder)
 }
 
-PlotAnalyedAQWell <- function(input.path, filename, wellname){
+PlotAnalyedAQWell <- function(input.path, wellname){
   #wellinfo.list <-  GenerateAQList("GZJ20170906.pyrorun", "A1")
-  wellinfo.list <-  GenerateAQList(input.path, filename, wellname)    
+  wellinfo.list <-  GenerateAQList(input.path, wellname)    
   variableinfo.list <- GenerateVariableList(wellinfo.list)
   interval.y <- GenerateInterval(wellinfo.list$intensity) 
   intensityoffset <- wellinfo.list$intensity - wellinfo.list$baseline[1]
@@ -290,8 +291,8 @@ PlotAnalyedAQWell <- function(input.path, filename, wellname){
       ceiling(max(wellinfo.list$sigvalue) / interval.y) * interval.y)
 # posvari <- as.numeric(wellinfo.list$variableinfo["position", 1])      
   mycolor <- rainbow(1, start = 0.6, end = 0.7, alpha = 0.2)
-  filename.output <- paste(wellname, "_", filename, ".jpeg", sep="")
-  jpeg(file = filename.output, width = 1200, height = 400)
+  filename.output <- paste(wellname, "_", unique.string, ".png", sep="")
+  png(file = filename.output, width = 632, height = 220)
   if (sum(variableinfo.list$showpattern != "N/A") == 0) {
     layoutnum <- 5
   } else {
@@ -303,7 +304,7 @@ PlotAnalyedAQWell <- function(input.path, filename, wellname){
   layout(matrix(c(2, rep(1, layoutnum)), layoutnum + 1, 1, byrow=T))
   par(tck=0.01, 
       bty="l", 
-      mar=c(6.1, 4.1, 0, 2.1)) 
+      mar=c(4.1, 4.1, 0, 2.1)) 
   plot(wellinfo.list$timestamps,
       intensityoffset,
       yaxt = "n",
@@ -318,18 +319,18 @@ PlotAnalyedAQWell <- function(input.path, filename, wellname){
   axis(side = 1, 
       at = wellinfo.list$moment,
       labels = c(wellinfo.list$substance, "E", "S"), 
-      cex.axis = 2)
+      cex.axis = 1)
   axis(side = 1, 
       at = wellinfo.list$moment[seq(5, length(wellinfo.list$substance), 5)], 
       labels = as.character(seq(5, length(wellinfo.list$substance),5)),
-      line = 3,
+      line = 2,
       tick = F,
-      cex.axis = 2)
+      cex.axis = 1)
   axis(side = 2,
       las = 1,
       at = seq(range.ylimit[1], (range.ylimit[2] + 0.1 * interval.y), 
           interval.y),
-      cex.axis = 1.5)
+      cex.axis = 1)
   abline(h = seq(-1000, range.ylimit[2] - 0.1 * interval.y, interval.y), 
       lty = 3)
   for (i in 1 : length(variableinfo.list$variablestart)) {
@@ -356,14 +357,14 @@ PlotAnalyedAQWell <- function(input.path, filename, wellname){
       side = 3, 
       adj = 0, 
       line = 0,
-      cex = 1.7)
+      cex = 1)
   for (i in 1 : length(variableinfo.list$variablestart)) {
     rect(wellinfo.list$moment[wellinfo.list$qualitypeak.whichfalse[
                 variableinfo.list$variablestart[i]]] - 30, 0,
         wellinfo.list$moment[wellinfo.list$qualitypeak.whichfalse[
                     variableinfo.list$variablestart[i]]] - 30 + 
-            2 * strwidth(variableinfo.list$showpattern[i]) + xinch(0.1),
-        2 * strheight(variableinfo.list$showpattern[i]) + yinch(0.1),
+             strwidth(variableinfo.list$showpattern[i]) + xinch(0.1),
+        strheight(variableinfo.list$showpattern[i]) + yinch(0.1),
         col = variableinfo.list$variablecolor[i],
         border = F)
     text(wellinfo.list$moment[wellinfo.list$qualitypeak.whichfalse[
@@ -371,14 +372,14 @@ PlotAnalyedAQWell <- function(input.path, filename, wellname){
             30 + xinch(0.05), yinch(0.05), 
         variableinfo.list$showpattern[i], 
         adj = c(0, 0), 
-        cex = 2) 
+        cex = 1) 
   }
   dev.off()      
 }
 
-PlotOtherWell <- function(filename, wellname, reason.text, color){
-  filename.output <- paste(wellname, "_", filename, ".jpeg", sep="")
-  jpeg(file = filename.output, width = 1200, height = 400)
+PlotOtherWell <- function(wellname, reason.text, color){
+  filename.output <- paste(wellname, "_", unique.string, ".png", sep="")
+  png(file = filename.output, width = 632, height = 220)
   plot(1, 1, yaxt = "n",
       xaxt = "n",
       ylim = c(0, 10),
@@ -388,55 +389,51 @@ PlotOtherWell <- function(filename, wellname, reason.text, color){
       axes = F, 
       ylab = '',
       col = "white")
-  text(5, 5, reason.text, cex = 4, col = color)
+  text(5, 5, reason.text, cex = 2, col = color)
   dev.off()       
 }
 #try(, silent=TRUE) 
 #PlotAnalyedAQWell("GZJ20170906.pyrorun", "A1")
 if(TRUE){
-  filelist <- list.files(input.path, pattern = "*[^)].pyrorun$")
-  for (file.name in filelist) {
-    #file.name <- filelist[2]
-    print(file.name)
-    category.welltype <- try(ClassifyWellType(input.path, file.name), 
-        silent=TRUE)
-    if('try-error' %in% class(category.welltype)){
-      break
-    }
-    if (length(category.welltype$AQanalyzed.welllist) > 0) {
-      for (wellname in category.welltype$AQanalyzed.welllist) {
-        fit <- try(PlotAnalyedAQWell(input.path, file.name, wellname), 
-            silent=TRUE)
-        if('try-error' %in% class(fit)){
-          PlotOtherWell(file.name, wellname, "出错了！请人工插入峰形图并联系管理员！", "red")
-        }
+  print(input.path)
+  category.welltype <- try(ClassifyWellType(input.path), 
+      silent=TRUE)
+  if('try-error' %in% class(category.welltype)){
+    break
+  }
+  if (length(category.welltype$AQanalyzed.welllist) > 0) {
+    for (wellname in category.welltype$AQanalyzed.welllist) {
+      fit <- try(PlotAnalyedAQWell(input.path, wellname), 
+          silent=TRUE)
+      if('try-error' %in% class(fit)){
+        PlotOtherWell(wellname, "ERROR! Please contact the administrator and insert the peak graph!", "red")
       }
     }
-    if (length(category.welltype$AQnotanalyzed.welllist) > 0) {
-      for (wellname in category.welltype$AQnotanalyzed.welllist) {
-        fit <- try(PlotOtherWell(file.name, wellname, "未分析AQ类型孔位，请人工插入峰形图！", 
-                "dark red"), silent=TRUE) 
-        if('try-error' %in% class(fit)){
-          PlotOtherWell(file.name, wellname, "出错了！请人工插入峰形图并联系管理员！", "black")
-        }
+  }
+  if (length(category.welltype$AQnotanalyzed.welllist) > 0) {
+    for (wellname in category.welltype$AQnotanalyzed.welllist) {
+      fit <- try(PlotOtherWell(wellname, "Not analyzed AQ well!  Please analyze it first! ", 
+              "dark red"), silent=TRUE) 
+      if('try-error' %in% class(fit)){
+        PlotOtherWell(wellname, "ERROR! Please contact the administrator and insert the peak graph!", "black")
       }
     }
-    if (length(category.welltype$Othernotanalyzed.welllist) > 0) {
-      for (wellname in category.welltype$Othernotanalyzed.welllist) {
-        fit <- try(PlotOtherWell(file.name, wellname, "未分析非AQ类型孔位，请人工插入峰形图！", 
-                "yellow"), silent=TRUE)
-        if('try-error' %in% class(fit)){
-          PlotOtherWell(file.name, wellname, "出错了！请人工插入峰形图并联系管理员！", "black")
-        }
+  }
+  if (length(category.welltype$Othernotanalyzed.welllist) > 0) {
+    for (wellname in category.welltype$Othernotanalyzed.welllist) {
+      fit <- try(PlotOtherWell( wellname, "Not analyzed nonAQ well! Please insert the peak graph!", 
+              "yellow"), silent=TRUE)
+      if('try-error' %in% class(fit)){
+        PlotOtherWell( wellname, "ERROR!Please contact the administrator and insert the peak graph!", "black")
       }
     }
-    if (length(category.welltype$Otheranalyzed.welllist) > 0) {
-      for (wellname in category.welltype$Otheranalyzed.welllist) {
-        fit <- try(PlotOtherWell(file.name, wellname, "SQA等非AQ类型孔位，请人工插入峰形图！", 
-                "blue"), silent=TRUE)
-        if('try-error' %in% class(fit)){
-          PlotOtherWell(file.name, wellname, "出错了！请人工插入峰形图并联系管理员！", "black")
-        }
+  }
+  if (length(category.welltype$Otheranalyzed.welllist) > 0) {
+    for (wellname in category.welltype$Otheranalyzed.welllist) {
+      fit <- try(PlotOtherWell(wellname, "Analyzed nonAQ well! Please insert the peak graph! ", 
+              "blue"), silent=TRUE)
+      if('try-error' %in% class(fit)){
+        PlotOtherWell(wellname, "ERROR! Please contact the administrator and insert the peak graph! ", "black")
       }
     }
   }
@@ -444,26 +441,21 @@ if(TRUE){
 }
 
 if(FALSE){
-  filelist <- list.files(input.path, pattern = "*[^)].pyrorun$")
-  for (file.name in filelist) {
-    #file.name <- filelist[2]
-    #print(file.name)
-    category.welltype <- try(ClassifyWellType(input.path, file.name), 
-        silent=TRUE)
-    if('try-error' %in% class(category.welltype)){
-      break
-    }
-    if (length(category.welltype$AQanalyzed.welllist) > 0) {
-      for (wellname in category.welltype$AQanalyzed.welllist) {
-        file.parsed <- htmlParse(paste(input.path, "//", file.name, sep=""))  
-        well.name <- wellname
-        wellnr.attrstring <- paste("[@wellnr='", well.name, "']", sep="")
-        wellanalysis.xpath <- paste("//wellanalysismethodresults",
-            wellnr.attrstring, "/*[@index='1']", sep = "")
-        wellanalysis.node <- getNodeSet(file.parsed, wellanalysis.xpath)
-        if (length(wellanalysis.node)==1) {
-          cat(file.name, wellname, length(wellanalysis.node),"\n")
-        }
+  category.welltype <- try(ClassifyWellType(input.path), 
+      silent=TRUE)
+  if('try-error' %in% class(category.welltype)){
+    break
+  }
+  if (length(category.welltype$AQanalyzed.welllist) > 0) {
+    for (wellname in category.welltype$AQanalyzed.welllist) {
+      file.parsed <- htmlParse(input.path)  
+      well.name <- wellname
+      wellnr.attrstring <- paste("[@wellnr='", well.name, "']", sep="")
+      wellanalysis.xpath <- paste("//wellanalysismethodresults",
+          wellnr.attrstring, "/*[@index='1']", sep = "")
+      wellanalysis.node <- getNodeSet(file.parsed, wellanalysis.xpath)
+      if (length(wellanalysis.node)==1) {
+        cat(file.name, wellname, length(wellanalysis.node),"\n")
       }
     }
   }
